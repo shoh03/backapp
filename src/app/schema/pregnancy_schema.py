@@ -35,3 +35,5 @@ class PregnancyUpdateDTO(BaseModel):
     pregnancy_gestational_reference: datetime | None = None
     pregnancy_due_date: datetime | None = None
     pregnancy_status: PregnancyStatus
+    
+    fetuses: list[FetusCreateDTO] = Field(min_length=1)
