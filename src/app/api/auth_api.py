@@ -1,6 +1,6 @@
 import os
 from dotenv import load_dotenv
-from fastapi import APIRouter, Query, Depends, Response, HTTPException
+from fastapi import APIRouter, Query, Depends, Response, HTTPException, Request
 from app.schema.common_schema import ApiResponseDTO
 from app.schema.user_schema import UserClaimDTO, UserCreateDTO
 from app.enum.user_enum import UserProvider
@@ -244,12 +244,16 @@ async def logout(
     summary="토큰 재발급"
 )
 async def refresh(
+    request: Request,
     response: Response,
-    tokens: JwtTokenDTO = Depends(get_tokens),
     auth_service: AuthService = Depends(get_auth_service)
 ):
-    refresh_token = tokens.refresh_token
+    # access_token은 만료/삭제되어도 됩니다. 재발급은 refresh_token으로만 검사합니다.
+    refresh_token = request.cookies.get("refresh_token")
+    response.headers["Cache-Control"] = "no-store"
     try:
+        if not refresh_token:
+            raise HTTPException(status_code=401, detail="로그인이 필요합니다.")
         access_token = await auth_service.refresh(refresh_token)
 
         response.set_cookie(
